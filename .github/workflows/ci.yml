@@ -70,7 +70,26 @@ jobs:
             type=sha,format=short
             type=raw,value=latest
 
-      - name: Build y push
+      - name: Build de la imagen (sin publicar)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: demo-devops-johnny:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Escaneo de vulnerabilidades (Trivy)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: demo-devops-johnny:scan
+          version: v0.69.3
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: Push de la imagen
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -78,4 +97,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
