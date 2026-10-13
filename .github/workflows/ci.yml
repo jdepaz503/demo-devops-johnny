@@ -97,3 +97,48 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      IMAGE_REPO: ghcr.io/${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Crear clúster de Kubernetes (kind)
+        run: kind create cluster --name demo --wait 120s
+
+      - name: Aplicar manifiestos
+        run: |
+          IMAGE="${IMAGE_REPO}:sha-${GITHUB_SHA::7}"
+          echo "Imagen a desplegar: ${IMAGE}"
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl create secret generic demo-devops-secret \
+            --namespace demo-devops \
+            --from-literal=DJANGO_SECRET_KEY="$(openssl rand -base64 48)"
+          sed "s|image: ghcr.io/.*|image: ${IMAGE}|" k8s/deployment.yaml | kubectl apply -f -
+          kubectl apply -f k8s/service.yaml -f k8s/hpa.yaml -f k8s/ingress.yaml
+
+      - name: Esperar el despliegue
+        run: kubectl rollout status deployment/demo-devops --namespace demo-devops --timeout=180s
+
+      - name: Pruebas de humo
+        run: |
+          kubectl port-forward svc/demo-devops 8080:80 --namespace demo-devops &
+          sleep 5
+          curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 2 http://localhost:8080/health/
+          echo
+          curl --fail --silent --show-error http://localhost:8080/api/users/
+          echo
+
+      - name: Estado final del clúster
+        if: always()
+        run: |
+          kubectl get deployment,pods,service,ingress,hpa --namespace demo-devops -o wide
+          kubectl logs --namespace demo-devops --selector app.kubernetes.io/name=demo-devops-johnny --tail=20 || true
