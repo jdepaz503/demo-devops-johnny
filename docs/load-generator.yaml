@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: load-generator
+  namespace: demo-devops
+  labels:
+    app.kubernetes.io/name: load-generator
+spec:
+  restartPolicy: Never
+  containers:
+    - name: load
+      image: busybox:1.36
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          for i in 1 2 3; do
+            ( while true; do wget -q -O /dev/null --header "Host: localhost" http://demo-devops/api/users/; done ) &
+          done
+          wait
+      resources:
+        requests:
+          cpu: 50m
+          memory: 16Mi
+        limits:
+          cpu: 500m
+          memory: 64Mi
