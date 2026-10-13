@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-devops-config
+  namespace: demo-devops
+  labels:
+    app.kubernetes.io/name: demo-devops-johnny
+data:
+  DATABASE_NAME: db.sqlite3
+  DJANGO_DEBUG: "False"
+  DJANGO_ALLOWED_HOSTS: "demo-devops.local,localhost,127.0.0.1"
