@@ -34,6 +34,13 @@ jobs:
           coverage report
           coverage xml
 
+      - name: Validar chart de Helm
+        run: |
+          helm lint charts/demo-devops --strict
+          helm template demo-devops charts/demo-devops --namespace demo-devops > /dev/null
+          helm template demo-devops charts/demo-devops --namespace demo-devops \
+            --set autoscaling.enabled=false \
+            --set ingress.tls.enabled=true > /dev/null
       - name: Guardar reporte de cobertura
         uses: actions/upload-artifact@v7
         with:
@@ -142,3 +149,4 @@ jobs:
         run: |
           kubectl get deployment,pods,service,ingress,hpa --namespace demo-devops -o wide
           kubectl logs --namespace demo-devops --selector app.kubernetes.io/name=demo-devops-johnny --tail=20 || true
+
