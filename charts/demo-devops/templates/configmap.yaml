@@ -1,0 +1,14 @@
+{{- $hosts := .Values.config.allowedHosts }}
+{{- if .Values.ingress.enabled }}
+{{- $hosts = append $hosts .Values.ingress.host }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "demo-devops.fullname" . }}
+  labels:
+    {{- include "demo-devops.labels" . | nindent 4 }}
+data:
+  DATABASE_NAME: {{ .Values.config.databaseName | quote }}
+  DJANGO_DEBUG: {{ ternary "True" "False" .Values.config.debug | quote }}
+  DJANGO_ALLOWED_HOSTS: {{ join "," (uniq $hosts) | quote }}

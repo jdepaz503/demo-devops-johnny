@@ -1,0 +1,13 @@
+Aplicacion {{ include "demo-devops.fullname" . }} desplegada en el namespace {{ .Release.Namespace }}.
+
+Ver los pods
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }} -o wide
+
+Probar el Service
+  kubectl port-forward svc/{{ include "demo-devops.fullname" . }} 18080:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+  curl http://localhost:18080/health/
+{{- if .Values.ingress.enabled }}
+
+Probar el Ingress (con minikube tunnel abierto)
+  curl -H "Host: {{ .Values.ingress.host }}" http://127.0.0.1/health/
+{{- end }}

@@ -1,0 +1,82 @@
+# Imagen. Si tag queda vacio se usa el appVersion del Chart.
+image:
+  repository: ghcr.io/jdepaz503/demo-devops-johnny
+  tag: ""
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Se ignora cuando el autoescalado esta activo.
+replicaCount: 2
+
+# Configuracion no sensible. Va en un ConfigMap.
+config:
+  databaseName: db.sqlite3
+  debug: false
+  allowedHosts:
+    - localhost
+    - 127.0.0.1
+
+# Clave de Django. Si djangoSecretKey queda vacia se genera una aleatoria.
+# Para usar un Secret que ya existe, indicar su nombre en existingSecret.
+secret:
+  create: true
+  existingSecret: ""
+  djangoSecretKey: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  host: demo-devops.local
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: demo-devops-tls
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 192Mi
+  limits:
+    cpu: 500m
+    memory: 384Mi
+
+# Django rechaza hosts desconocidos, por eso las probes envian este encabezado.
+probes:
+  hostHeader: localhost
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  liveness:
+    initialDelaySeconds: 20
+    periodSeconds: 20
+    failureThreshold: 3
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  whenUnsatisfiable: ScheduleAnyway
