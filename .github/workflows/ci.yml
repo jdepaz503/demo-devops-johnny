@@ -120,21 +120,25 @@ jobs:
       - name: Crear clúster de Kubernetes (kind)
         run: kind create cluster --name demo --wait 120s
 
-      - name: Aplicar manifiestos
+      - name: Desplegar con Helm
         run: |
-          IMAGE="${IMAGE_REPO}:sha-${GITHUB_SHA::7}"
-          echo "Imagen a desplegar: ${IMAGE}"
-          kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/configmap.yaml
-          kubectl create secret generic demo-devops-secret \
+          helm upgrade --install demo-devops charts/demo-devops \
+            --namespace demo-devops --create-namespace \
+            --reset-values \
+            --set image.tag="sha-${GITHUB_SHA::7}" \
+            --wait --timeout 180s
+
+      - name: Verificar que una actualizacion conserva el Secret
+        run: |
+          antes=$(kubectl get secret demo-devops --namespace demo-devops -o jsonpath='{.data.DJANGO_SECRET_KEY}')
+          helm upgrade demo-devops charts/demo-devops \
             --namespace demo-devops \
-            --from-literal=DJANGO_SECRET_KEY="$(openssl rand -base64 48)"
-          sed "s|image: ghcr.io/.*|image: ${IMAGE}|" k8s/deployment.yaml | kubectl apply -f -
-          kubectl apply -f k8s/service.yaml -f k8s/hpa.yaml -f k8s/ingress.yaml
-
-      - name: Esperar el despliegue
-        run: kubectl rollout status deployment/demo-devops --namespace demo-devops --timeout=180s
-
+            --reset-values \
+            --set image.tag="sha-${GITHUB_SHA::7}" \
+            --wait --timeout 180s
+          despues=$(kubectl get secret demo-devops --namespace demo-devops -o jsonpath='{.data.DJANGO_SECRET_KEY}')
+          test "$antes" = "$despues"
+          helm history demo-devops --namespace demo-devops
       - name: Pruebas de humo
         run: |
           kubectl port-forward svc/demo-devops 8080:80 --namespace demo-devops &
@@ -147,6 +151,8 @@ jobs:
       - name: Estado final del clúster
         if: always()
         run: |
+          helm list --namespace demo-devops
           kubectl get deployment,pods,service,ingress,hpa --namespace demo-devops -o wide
-          kubectl logs --namespace demo-devops --selector app.kubernetes.io/name=demo-devops-johnny --tail=20 || true
+          kubectl logs --namespace demo-devops --selector app.kubernetes.io/instance=demo-devops --tail=20 || true
+
 
