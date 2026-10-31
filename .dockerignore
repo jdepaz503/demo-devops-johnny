@@ -9,3 +9,12 @@ __pycache__
 db.sqlite3
 k8s
 terraform
+
+.cache
+.scannerwork
+charts
+docs
+sonar-project.properties
+README.md
+.env.example
+.gitattributes
