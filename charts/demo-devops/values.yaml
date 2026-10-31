@@ -37,6 +37,11 @@ ingress:
   tls:
     enabled: false
     secretName: demo-devops-tls
+    certManager:
+      enabled: false
+      createSelfSignedIssuer: false
+      issuerKind: Issuer
+      issuerName: demo-devops-selfsigned
 
 autoscaling:
   enabled: true
@@ -80,3 +85,4 @@ topologySpread:
   enabled: true
   maxSkew: 1
   whenUnsatisfiable: ScheduleAnyway
+

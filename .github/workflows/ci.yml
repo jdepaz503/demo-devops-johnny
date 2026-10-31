@@ -42,7 +42,9 @@ jobs:
           helm template demo-devops charts/demo-devops --namespace demo-devops > /dev/null
           helm template demo-devops charts/demo-devops --namespace demo-devops \
             --set autoscaling.enabled=false \
-            --set ingress.tls.enabled=true > /dev/null
+            --set ingress.tls.enabled=true \
+            --set ingress.tls.certManager.enabled=true \
+            --set ingress.tls.certManager.createSelfSignedIssuer=true > /dev/null
       - name: Analisis con SonarQube Cloud
         if: github.event_name == 'push'
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
@@ -125,7 +127,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Crear clúster de Kubernetes (kind)
+      - name: Crear clÃºster de Kubernetes (kind)
         run: kind create cluster --name demo --wait 120s
 
       - name: Desplegar con Helm
@@ -156,12 +158,9 @@ jobs:
           curl --fail --silent --show-error http://localhost:8080/api/users/
           echo
 
-      - name: Estado final del clúster
+      - name: Estado final del clÃºster
         if: always()
         run: |
           helm list --namespace demo-devops
           kubectl get deployment,pods,service,ingress,hpa --namespace demo-devops -o wide
           kubectl logs --namespace demo-devops --selector app.kubernetes.io/instance=demo-devops --tail=20 || true
-
-
-

@@ -1,0 +1,14 @@
+{{- $tls := .Values.ingress.tls }}
+{{- if and .Values.ingress.enabled $tls.enabled $tls.certManager.enabled $tls.certManager.createSelfSignedIssuer }}
+{{- if ne $tls.certManager.issuerKind "Issuer" }}
+{{- fail "createSelfSignedIssuer solo va con issuerKind Issuer" }}
+{{- end }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $tls.certManager.issuerName }}
+  labels:
+    {{- include "demo-devops.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+{{- end }}
