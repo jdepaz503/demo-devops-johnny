@@ -122,7 +122,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Crear clÃºster de Kubernetes (kind)
+      - name: Crear cluster de Kubernetes (kind)
         run: kind create cluster --name demo --wait 120s
 
       - name: Desplegar con Helm
@@ -153,7 +153,7 @@ jobs:
           curl --fail --silent --show-error http://localhost:8080/api/users/
           echo
 
-      - name: Estado final del clÃºster
+      - name: Estado final del cluster
         if: always()
         run: |
           helm list --namespace demo-devops
