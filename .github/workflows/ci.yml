@@ -92,28 +92,23 @@ jobs:
         with:
           context: .
           load: true
-          tags: demo-devops-johnny:scan
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Escaneo de vulnerabilidades (Trivy)
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
-          image-ref: demo-devops-johnny:scan
+          image-ref: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
           version: v0.69.3
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
           format: table
 
-      - name: Push de la imagen
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
+      - name: Push de la imagen escaneada
+        run: docker push --all-tags ghcr.io/${{ github.repository }}
 
   deploy:
     needs: build
