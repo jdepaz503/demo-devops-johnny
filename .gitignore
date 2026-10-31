@@ -7,3 +7,10 @@ db.sqlite3
 .env
 
 .scannerwork/
+
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+*.tfplan
