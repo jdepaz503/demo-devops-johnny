@@ -3,7 +3,7 @@ name: demo-devops
 description: API de usuarios en Django (demo-devops-johnny) empaquetada para Kubernetes
 type: application
 version: 0.1.0
-appVersion: "sha-5ce32a7"
+appVersion: "sha-6444bc4"
 keywords:
   - django
   - api
