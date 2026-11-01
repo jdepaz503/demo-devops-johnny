@@ -1,0 +1,20 @@
+# servicio gratuito de Render con la imagen que publica el pipeline
+services:
+  - type: web
+    name: demo-devops-johnny
+    runtime: image
+    image:
+      url: ghcr.io/jdepaz503/demo-devops-johnny:latest
+    plan: free
+    healthCheckPath: /health/
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_NAME
+        value: db.sqlite3
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com,localhost
